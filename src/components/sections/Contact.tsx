@@ -1,6 +1,10 @@
 import { MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import emailjs from '@emailjs/browser';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import DOMPurify from 'dompurify';
+import validator from 'validator';
 import { ContactFormData } from '../../types/contact';
 import { contactInfo } from '../../data/contact';
 
@@ -12,11 +16,85 @@ export function Contact() {
     subject: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.');
-    setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+    
+    if (!executeRecaptcha) {
+      toast.error('reCAPTCHA não está pronto. Tente novamente.');
+      return;
+    }
+
+    // Validações de segurança
+    if (!validator.isEmail(formData.email)) {
+      toast.error('Por favor, insira um e-mail válido.');
+      return;
+    }
+
+    if (formData.phone && !validator.isMobilePhone(formData.phone, 'pt-BR')) {
+      toast.error('Por favor, insira um telefone válido.');
+      return;
+    }
+
+    if (formData.message.length < 10) {
+      toast.error('A mensagem deve ter pelo menos 10 caracteres.');
+      return;
+    }
+
+    if (formData.message.length > 1000) {
+      toast.error('A mensagem não pode ter mais de 1000 caracteres.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Executa o reCAPTCHA v3
+      const token = await executeRecaptcha('contact_form');
+      
+      if (!token) {
+        toast.error('Falha na verificação de segurança. Tente novamente.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Sanitiza os dados para prevenir XSS
+      const sanitizedData = {
+        name: DOMPurify.sanitize(formData.name, { ALLOWED_TAGS: [] }),
+        email: DOMPurify.sanitize(formData.email, { ALLOWED_TAGS: [] }),
+        phone: DOMPurify.sanitize(formData.phone, { ALLOWED_TAGS: [] }),
+        subject: DOMPurify.sanitize(formData.subject, { ALLOWED_TAGS: [] }),
+        message: DOMPurify.sanitize(formData.message, { ALLOWED_TAGS: [] }),
+      };
+
+      // Configurações do EmailJS vindas das variáveis de ambiente
+      const serviceID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+      const templateParams = {
+        from_name: sanitizedData.name,
+        from_email: sanitizedData.email,
+        phone: sanitizedData.phone,
+        subject: sanitizedData.subject,
+        message: sanitizedData.message,
+        to_name: 'Pereira-Silva',
+        'g-recaptcha-response': token,
+      };
+
+      await emailjs.send(serviceID, templateID, templateParams, publicKey);
+      
+      toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.');
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      
+    } catch (error) {
+      toast.error('Erro ao enviar mensagem. Por favor, tente novamente.');
+      console.error('Erro ao enviar email:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -137,9 +215,10 @@ export function Contact() {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#5E0D13] to-[#2E0506] hover:from-[#70522B] hover:to-[#5E0D13] text-[#DCC48F] py-4 rounded-lg transition-all shadow-lg hover:shadow-xl"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-[#5E0D13] to-[#2E0506] hover:from-[#70522B] hover:to-[#5E0D13] text-[#DCC48F] py-4 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Enviar Mensagem
+                {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
               </button>
             </form>
           </div>
