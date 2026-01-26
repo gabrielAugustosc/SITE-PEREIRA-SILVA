@@ -1,3 +1,4 @@
+
 import { Award, Users, TrendingUp, Shield } from 'lucide-react';
 
 export function About() {
