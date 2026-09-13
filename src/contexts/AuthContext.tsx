@@ -21,8 +21,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Credenciais de demonstração inicial
 export const DEMO_CREDENTIALS = {
-  email: 'admin@pereirasilva.adv.br',
-  password: 'admin123',
+  email: 'melissa@admin.adv.br',
+  password: 'Mel080910',
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
