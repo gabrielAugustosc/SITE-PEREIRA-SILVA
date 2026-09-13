@@ -45,6 +45,6 @@ next-env.d.ts
 .png.d.ts
 
 #credenciais
-contexts/AuthContext.tsx
+contexts
 .AuthContext.tsx
 .BannerComponent.tsx
