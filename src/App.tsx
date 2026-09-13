@@ -1,26 +1,39 @@
-import { useState } from 'react';
-import { Header } from './components/layout/Header';
-import { Hero } from './components/sections/Hero';
-import { About } from './components/sections/About';
-import { PracticeAreas } from './components/sections/PracticeAreas';
-import { Team } from './components/sections/Team';
-import { Contact } from './components/sections/Contact';
-import { Footer } from './components/layout/Footer';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { BannerProvider } from './contexts/BannerContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { PublicSite } from './pages/PublicSite';
+import { Login } from './pages/Login';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
 
 export default function App() {
-  const [activeSection, setActiveSection] = useState('home');
-
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      <Header activeSection={activeSection} setActiveSection={setActiveSection} />
-      <main>
-        <Hero />
-        <About />
-        <PracticeAreas />
-        <Team />
-        <Contact />
-      </main>
-      <Footer />
-    </div>
+    <AuthProvider>
+      <BannerProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Site público da advocacia */}
+            <Route path="/" element={<PublicSite />} />
+
+            {/* Autenticação */}
+            <Route path="/login" element={<Login />} />
+
+            {/* Área protegida da administração */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Redirecionamento padrão para rotas não encontradas */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </BannerProvider>
+    </AuthProvider>
   );
 }
+

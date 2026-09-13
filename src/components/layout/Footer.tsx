@@ -1,4 +1,5 @@
-import { Scale, Instagram} from 'lucide-react';
+import { Scale, Instagram, Lock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -106,9 +107,19 @@ export function Footer() {
             <p className="text-[#DCC48F]/60 text-sm text-center md:text-left">
               © {currentYear} Pereira & Silva. Todos os direitos reservados.
             </p>
-            <p className="text-[#DCC48F]/60 text-sm text-center md:text-right">
-              OAB/SP - Inscrição Principal: 398.623
-            </p>
+            <div className="flex items-center gap-4">
+              <p className="text-[#DCC48F]/60 text-sm text-center md:text-right">
+                OAB/SP - Inscrição Principal: 398.623
+              </p>
+              <Link
+                to="/admin"
+                className="inline-flex items-center gap-1.5 text-xs text-[#DCC48F]/40 hover:text-[#DCC48F] transition-colors pl-3 border-l border-[#70522B]/60"
+                title="Acesso Administrativo"
+              >
+                <Lock className="w-3 h-3" />
+                <span>Área Restrita</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
